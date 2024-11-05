@@ -13,15 +13,29 @@ pool.on('connect', () => {
     console.log('Conectado ao banco de dados PostgreSQL');
 });
 
-// Teste de conexão
-pool.query('SELECT NOW()', (err, res) => {
-    if (err) {
-        console.error('Erro ao conectar ao banco de dados:', err);
-    } else {
-        console.log('Conexão bem-sucedida! Hora atual:', res.rows[0].now);
-    }
-});
+const initializeDatabase = async () => {
+    const queryText = `
+        CREATE TABLE IF NOT EXISTS tasks (
+            id SERIAL PRIMARY KEY,
+            title VARCHAR(100) NOT NULL,
+            description TEXT,
+            status VARCHAR(20) DEFAULT 'a fazer',
+            priority VARCHAR(20) DEFAULT 'média',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            deadline TIMESTAMP
+        );
+    `;
 
+    try {
+        await pool.query(queryText);
+        console.log("Tabela 'tasks' verificada/criada com sucesso!");
+    } catch (error) {
+        console.error("Erro ao criar a tabela 'tasks':", error);
+    }
+};
+
+// Exporta a pool e a função de inicialização
 module.exports = {
-    query: (text, params) => pool.query(text, params),
+    pool,
+    initializeDatabase,
 };
