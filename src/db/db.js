@@ -13,6 +13,7 @@ pool.on('connect', () => {
     console.log('Conectado ao banco de dados PostgreSQL');
 });
 
+// Função para inicializar a tabela de tarefas
 const initializeDatabase = async () => {
     const queryText = `
         CREATE TABLE IF NOT EXISTS tasks (
@@ -36,6 +37,6 @@ const initializeDatabase = async () => {
 
 // Exporta a pool e a função de inicialização
 module.exports = {
-    pool,
+    query: (text, params) => pool.query(text, params),
     initializeDatabase,
 };
