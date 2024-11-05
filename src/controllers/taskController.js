@@ -1,8 +1,6 @@
 const db = require('../db/db');
 
 // Criar uma nova tarefa
-// src/controllers/taskController.js
-
 exports.createTask = async (req, res) => {
     const { title, description, status, priority, deadline } = req.body;
     try {
@@ -13,18 +11,49 @@ exports.createTask = async (req, res) => {
         );
         res.status(201).json(result.rows[0]);
     } catch (error) {
-        console.error("Erro ao criar a tarefa:", error);  // Log do erro
+        console.error("Erro ao criar a tarefa:", error);
         res.status(500).json({ error: "Erro ao criar a tarefa" });
     }
 };
 
-
-// Listar todas as tarefas
+// Listar todas as tarefas com filtros e ordenação
 exports.getAllTasks = async (req, res) => {
+    const { status, priority, deadline, sortBy, order } = req.query;
+
+    // Construir a base da consulta SQL
+    let queryText = 'SELECT * FROM tasks';
+    const queryParams = [];
+
+    // Filtros
+    if (status) {
+        queryParams.push(status);
+        queryText += ` WHERE status = $${queryParams.length}`;
+    }
+
+    if (priority) {
+        queryParams.push(priority);
+        queryText += queryParams.length === 1 ? ` WHERE priority = $${queryParams.length}` : ` AND priority = $${queryParams.length}`;
+    }
+
+    if (deadline) {
+        queryParams.push(deadline);
+        queryText += queryParams.length === 1 ? ` WHERE deadline <= $${queryParams.length}` : ` AND deadline <= $${queryParams.length}`;
+    }
+
+    // Ordenação
+    if (sortBy) {
+        const validSortColumns = ['created_at', 'deadline', 'priority'];
+        if (validSortColumns.includes(sortBy)) {
+            const sortOrder = order === 'desc' ? 'DESC' : 'ASC';
+            queryText += ` ORDER BY ${sortBy} ${sortOrder}`;
+        }
+    }
+
     try {
-        const result = await db.query('SELECT * FROM tasks');
+        const result = await db.query(queryText, queryParams);
         res.status(200).json(result.rows);
     } catch (error) {
+        console.error("Erro ao listar as tarefas:", error);
         res.status(500).json({ error: "Erro ao listar as tarefas" });
     }
 };
